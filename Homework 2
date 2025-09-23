@@ -1,0 +1,22 @@
+grades = {
+    "Armen": {"English": 10, "Russian": 7, "Math": 8},
+    "Hayk": {"English": 14, "Russian": 18, "Math": 12},
+    "Anna": {"English": 12, "Russian": 15, "Math": 10}
+}
+ 
+print("Average grade for each student = ")
+for student, subjects in grades.items():
+    avg = sum(subjects.values()) / len(subjects)
+    print(f"{student}: {avg:.4f}")
+ 
+subject_totals = {}
+subject_counts = {}
+ 
+for subjects in grades.values():
+    for subject, grade in subjects.items():
+        subject_totals[subject] = subject_totals.get(subject, 0) + grade
+        subject_counts[subject] = subject_counts.get(subject, 0) + 1
+print("Average grade for each subject =")
+for subject in subject_totals:
+    avg = subject_totals[subject] / subject_counts[subject]
+    print(f"{subject}: {avg:.4f}")
