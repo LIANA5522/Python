@@ -1,0 +1,52 @@
+*Custom Compiler Version W-2024.09-SP1-3
+*Sat Dec 13 14:15:29 2025
+
+.global gnd!
+********************************************************************************
+* Library          : diplomayin
+* Cell             : inv
+* View             : schematic
+* View Search List : hspice hspiceD cmos.sch cmos_sch schematic veriloga
+* View Stop List   : hspice hspiceD veriloga
+********************************************************************************
+.subckt inv in out vdd vss
+xm0 out in vss vss n105 w=0.1u l=0.03u nf=1 m=1
+xm1 out in vdd vdd p105 w=0.1u l=0.03u nf=1 m=1
+.ends inv
+
+********************************************************************************
+* Library          : diplomayin
+* Cell             : circuit
+* View             : schematic
+* View Search List : hspice hspiceD cmos.sch cmos_sch schematic veriloga
+* View Stop List   : hspice hspiceD veriloga
+
+
+
+r30 net16 vss r=1k
+r20 net13 vss r=1k
+c50 out net16 c=1p
+c40 inp net13 c=1p
+********************************************************************************
+.subckt circuit inp out vdd vss
+xi1 net8 out vdd vss inv
+xi0 net13 net8 vdd vss inv
+r3 net16 vss r=1k
+r2 net13 vss r=1k
+c5 out net16 c=1p
+c4 inp net13 c=1p
+.ends circuit
+
+********************************************************************************
+* Library          : diplomayin
+* Cell             : circuit_tb
+* View             : schematic
+* View Search List : hspice hspiceD cmos.sch cmos_sch schematic veriloga
+* View Stop List   : hspice hspiceD veriloga
+********************************************************************************
+.subckt circuit_tb in out
+xi0 in out vdd gnd! circuit
+v1 vdd gnd! dc=0.7
+c3 out gnd! c=1p
+v4 in gnd! dc=0.4 ac=1
+.ends circuit_tb
