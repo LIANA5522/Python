@@ -1,0 +1,118 @@
+from collections import defaultdict
+NETLIST_FILE = "netlist_large.txt"
+#NETLIST_FILE = "netlist_example.txt"
+with open(NETLIST_FILE, "r") as f:
+   lines = f.readlines()
+
+subckts = {}
+current = None
+res_table = []
+cap_table = []
+mos_table = []
+errors = []
+
+
+for lineno, line in enumerate(lines, start=1):
+   raw_line = line.rstrip("\n")
+   line = raw_line.strip()
+   if not line or line.startswith("*"):
+       continue
+#  subckt start
+   if line.lower().startswith(".subckt"):
+       name = line.split()[1]
+       subckts[name] = {
+           "res": 0,
+           "cap": 0,
+           "nmos": 0,
+           "pmos": 0,
+           "inst": defaultdict(int)
+       }
+       current = name
+       continue
+#  subckt end
+   if line.lower().startswith(".ends"):
+       current = None
+       continue
+   tokens = line.split()
+   head = tokens[0].lower()
+
+ # VALIDATION: device outside subckt
+
+   if current is None and (head.startswith("r") or
+                           head.startswith("c") or
+                           head.startswith("xm")):
+       errors.append(
+           f"Line {lineno}: device outside .subckt/.ends -> '{raw_line}'"
+       )
+       continue
+   if current is None:
+       continue
+#  Resistor
+   if head.startswith("r"):
+       subckts[current]["res"] += 1
+       for t in tokens:
+           if t.startswith("r="):
+               res_table.append((tokens[0], current, t.split("=")[1]))
+#  Capacitor
+   elif head.startswith("c"):
+       subckts[current]["cap"] += 1
+       for t in tokens:
+           if t.startswith("c="):
+               cap_table.append((tokens[0], current, t.split("=")[1]))
+#  MOSFET
+   elif head.startswith("xm"):
+       if len(tokens) >= 6:
+           model = tokens[5].lower()
+           W = "-"
+           L = "-"
+           for t in tokens:
+               if t.startswith("w="):
+                   W = t.split("=")[1]
+               elif t.startswith("l="):
+                   L = t.split("=")[1]
+           if model.startswith("n"):
+               subckts[current]["nmos"] += 1
+               mos_table.append(("NMOS", tokens[0], current, W, L))
+           elif model.startswith("p"):
+               subckts[current]["pmos"] += 1
+               mos_table.append(("PMOS", tokens[0], current, W, L))
+
+# Subckt instance
+   elif head.startswith("xi"):
+       subckts[current]["inst"][tokens[-1]] += 1
+
+
+print("\nNETLIST VALIDATION\n")
+if errors:
+   print(" Netlist contains ERRORS:\n")
+   for e in errors:
+       print(e)
+else:
+   print(" Netlist is VALID (all devices inside .subckt / .ends)")
+
+
+# TABLE 1: DEVICE COUNTS
+
+print("\nTABLE 1: DEVICE COUNTS\n")
+print(f"{'Subckt':<12}{'R':<4}{'C':<4}{'NMOS':<6}{'PMOS':<6}{'Instances'}")
+print("-" * 70)
+for s, d in subckts.items():
+   inst = ", ".join(f"{k}×{v}" for k, v in d["inst"].items())
+   print(f"{s:<12}{d['res']:<4}{d['cap']:<4}{d['nmos']:<6}{d['pmos']:<6}{inst}")
+
+
+# TABLE 2: DEVICE PARAMETERS
+
+print("\nTABLE 2: DEVICE PARAMETERS\n")
+print("RESISTORS:")
+print(f"{'Name':<8}{'Subckt':<12}{'Ohms'}")
+for r in res_table:
+   print(f"{r[0]:<8}{r[1]:<12}{r[2]}")
+print("\nCAPACITORS:")
+print(f"{'Name':<8}{'Subckt':<12}{'Capacitance'}")
+for c in cap_table:
+   print(f"{c[0]:<8}{c[1]:<12}{c[2]}")
+print("\nTRANSISTORS:")
+print(f"{'Type':<6}{'Name':<8}{'Subckt':<12}{'W':<8}{'L'}")
+for m in mos_table:
+   print(f"{m[0]:<6}{m[1]:<8}{m[2]:<12}{m[3]:<8}{m[4]}")
