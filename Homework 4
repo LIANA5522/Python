@@ -1,0 +1,60 @@
+
+class Food:
+    def __init__(self, name):
+        self.name = name
+
+
+class Animal:
+    def __init__(self, name, species, diet):
+        self.name = name
+        self.species = species
+        self.diet = diet  # list of allowed foods
+        self.hungry = True
+
+    def feed(self, food):
+        if not self.hungry:
+            print(f"{self.name} ({self.species}) is already full.")
+            return
+
+        if food.name in self.diet:
+            print(f"{self.name} happily eats {food.name}.")
+            self.hungry = False
+        else:
+            print(f"{self.name} refuses to eat {food.name}.")
+
+
+class Zoo:
+    def __init__(self, name):
+        self.name = name
+        self.animals = []
+
+    def add_animal(self, animal):
+        self.animals.append(animal)
+        print(f"{animal.name} the {animal.species} joined {self.name}.")
+
+    def feed_all(self, food):
+        print(f"\nFeeding all animals with {food.name}:")
+        for animal in self.animals:
+            animal.feed(food)
+
+
+# --- Demo ---
+# Foods
+meat = Food("Meat")
+grass = Food("Grass")
+fruit = Food("Fruit")
+
+# Animals with diets
+lion = Animal("Simba", "Lion", ["Meat"])
+zebra = Animal("Marty", "Zebra", ["Grass", "Fruit"])
+bear = Animal("Baloo", "Bear", ["Meat", "Fruit"])
+
+# Zoo setup
+my_zoo = Zoo("Sunny Zoo")
+my_zoo.add_animal(lion)
+my_zoo.add_animal(zebra)
+my_zoo.add_animal(bear)
+
+# Feeding
+my_zoo.feed_all(grass)
+my_zoo.feed_all(meat)
